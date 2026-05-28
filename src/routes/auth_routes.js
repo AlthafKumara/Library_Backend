@@ -1,20 +1,19 @@
 import { Router } from 'express';
+import { formValidate } from "../validators/auth_validate.js";
+import {loginSchema, registerSchema} from "../models/auth_schema.js";
+import { login, logout, registerAdmin, registerUser } from '../controllers/auth_controller.js';
 
 const router = Router();
 
 // Register
-router.post('/register', (req, res) => {
-  res.status(501).json({ success: false, message: 'Register endpoint - coming soon' });
-});
+router.post('/registerUser', formValidate(registerSchema), registerUser);
+
+router.post('/registerAdmin', formValidate(registerSchema), registerAdmin);
 
 // Login
-router.post('/login', (req, res) => {
-  res.status(501).json({ success: false, message: 'Login endpoint - coming soon' });
-});
+router.post('/login', formValidate(loginSchema), login);
 
 // Logout
-router.post('/logout', (req, res) => {
-  res.status(501).json({ success: false, message: 'Logout endpoint - coming soon' });
-});
+router.post('/logout', logout);
 
 export default router;
