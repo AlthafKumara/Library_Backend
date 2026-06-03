@@ -64,15 +64,9 @@ export const completeProfile = async (req, res) => {
 // ==========================================
 export const getProfileById = async (req, res) => {
   try {
-    // Ambil user dari token JWT yang sudah diverifikasi middleware
-    const userId = req.user?.id;
 
-    if (!userId) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Pengguna tidak terautentikasi.',
-      });
-    }
+    const { id: userId } = req.params;
+
 
     // Ambil profil berdasarkan ID dari tabel profiles
     const { data, error } = await supabase
