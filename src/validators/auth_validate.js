@@ -12,7 +12,7 @@ export const formValidate = (schema) => (req, res, next) => {
       const zodErrors = err.errors || err.issues;
       return res.status(400).json({
         status: 'error',
-        message: 'Validasi input Auth gagal',
+        message: 'Validasi input gagal',
         errors: zodErrors.map(e => ({ path: e.path.join('.'), message: e.message })),
       });
     }
