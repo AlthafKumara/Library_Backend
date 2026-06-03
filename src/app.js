@@ -2,16 +2,21 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
+
 
 import { NODE_ENV, MAX_FILE_SIZE_MB } from './config/env.js';
 import errorHandler from './middlewares/errorHandler.js';
 import authRoute from './routes/auth_routes.js';
+import profileRoute from "./routes/profile_routes.js"
 import bookRoute from './routes/book_routes.js';
+
 import borrowRoute from './routes/borrow_routes.js';
 
 const app = express();
 
 app.use(helmet());
+app.use(cookieParser());
 app.use(cors({
   origin: NODE_ENV === 'production'
     ? process.env.ALLOWED_ORIGIN
@@ -35,6 +40,7 @@ app.get(API, (req, res) => {
 });
 
 app.use(`${API}/auth`, authRoute);
+app.use(`${API}/profile`, profileRoute);
 app.use(`${API}/books`, bookRoute);
 app.use(`${API}/borrows`, borrowRoute);
 
