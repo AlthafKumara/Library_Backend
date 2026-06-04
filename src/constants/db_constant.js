@@ -13,5 +13,5 @@ export const SAVED_LIST_BOOKS = "saved_list_book"
 // BUCKET
 
 export const PHOTO_PROFILE_BUCKET = "profile_photos"
-export const COVER_BOOK_BUCKET = "cover_books"
+export const COVER_BOOK_BUCKET = "cover_book"
 

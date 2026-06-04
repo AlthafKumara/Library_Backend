@@ -19,3 +19,9 @@ export const uploadPhoto = multer({
   limits: { fileSize: MAX_FILE_SIZE_MB * 1024 * 1024 },
   fileFilter,
 }).single('photo_profile');
+
+export const uploadCover = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE_MB * 1024 * 1024 },
+  fileFilter,
+}).single('cover');
