@@ -6,12 +6,14 @@ import cookieParser from 'cookie-parser';
 
 
 import { NODE_ENV, MAX_FILE_SIZE_MB } from './config/env.js';
-import errorHandler from './middlewares/errorHandler.js';
+import  {errorHandler, undefinedRoute } from './middlewares/errorHandler.js';
 import authRoute from './routes/auth_routes.js';
 import profileRoute from "./routes/profile_routes.js"
 import bookRoute from './routes/book_routes.js';
 
 import borrowRoute from './routes/borrow_routes.js';
+import categoryRoute from './routes/category_routes.js';
+import { baseApi } from './middlewares/base_handle.js';
 
 const app = express();
 
@@ -31,27 +33,16 @@ app.use(express.urlencoded({ extended: true }));
 
 const API = '/api/v1';
 // BASE RETURN API
-app.get(API, (req, res) => {
-  res.json({
-    Status: "Success",
-    env: NODE_ENV,
-    Message : "Selamat datang di Library API Althaf"
-  });
-});
+app.get(API, baseApi(NODE_ENV))
 
 app.use(`${API}/auth`, authRoute);
 app.use(`${API}/profile`, profileRoute);
 app.use(`${API}/books`, bookRoute);
 app.use(`${API}/borrows`, borrowRoute);
+app.use(`${API}/categories`, categoryRoute);
 
 // 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Route tidak ditemukan',
-    path: req.originalUrl,
-  });
-});
+app.use(undefinedRoute);
 
 // Global error handler
 app.use(errorHandler);

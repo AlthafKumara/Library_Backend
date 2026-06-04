@@ -1,30 +1,57 @@
 import { Router } from 'express';
+import { authenticate } from '../middlewares/authenticate.js';
+import { formValidate } from '../validators/auth_validate.js';
+import { uploadPhoto, uploadCover } from '../middlewares/upload_middleware.js';
+import {
+  addBookSchema,
+  updateBookSchema,
+  getBookByIdSchema,
+} from '../models/schema/book_schema.js';
+import {
+  addBook,
+  getAllBooks,
+  getBookById,
+  updateBook,
+  deleteBook,
+  uploadCoverBook,
+} from '../controllers/book_controller.js';
 
 const router = Router();
 
-// GET all books
-router.get('/', (req, res) => {
-  res.status(501).json({ success: false, message: 'Get books endpoint - coming soon' });
-});
+// ==========================================
+// POST /books
+// Add a new book (protected)
+// ==========================================
+router.post('/', authenticate, formValidate(addBookSchema), addBook);
 
-// GET single book
-router.get('/:id', (req, res) => {
-  res.status(501).json({ success: false, message: 'Get book endpoint - coming soon' });
-});
+// ==========================================
+// GET /books
+// Get all books with category (public)
+// ==========================================
+router.get('/', getAllBooks);
 
-// POST create book
-router.post('/', (req, res) => {
-  res.status(501).json({ success: false, message: 'Create book endpoint - coming soon' });
-});
+// ==========================================
+// GET /books/:id
+// Get single book by UUID (public)
+// ==========================================
+router.get('/:id', formValidate(getBookByIdSchema), getBookById);
 
-// PUT update book
-router.put('/:id', (req, res) => {
-  res.status(501).json({ success: false, message: 'Update book endpoint - coming soon' });
-});
+// ==========================================
+// PUT /books/:id
+// Update a book by UUID (protected)
+// ==========================================
+router.put('/:id', authenticate, formValidate(updateBookSchema), updateBook);
 
-// DELETE book
-router.delete('/:id', (req, res) => {
-  res.status(501).json({ success: false, message: 'Delete book endpoint - coming soon' });
-});
+// ==========================================
+// DELETE /books/:id
+// Delete a book by UUID (protected)
+// ==========================================
+router.delete('/:id', authenticate, formValidate(getBookByIdSchema), deleteBook);
+
+// ==========================================
+// POST /books/:id/cover
+// Upload cover image for a book (protected)
+// ==========================================
+router.post('/:id/cover', authenticate, uploadCover, uploadCoverBook);
 
 export default router;
