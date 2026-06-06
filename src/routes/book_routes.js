@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middlewares/authenticate.js';
-import { formValidate } from '../validators/auth_validate.js';
+import { formValidate } from '../validators/form_validate.js';
 import { uploadPhoto, uploadCover } from '../middlewares/upload_middleware.js';
 import {
   addBookSchema,
