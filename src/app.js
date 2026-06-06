@@ -14,6 +14,7 @@ import bookRoute from './routes/book_routes.js';
 import borrowRoute from './routes/borrow_routes.js';
 import categoryRoute from './routes/category_routes.js';
 import savedListRoute from './routes/saved_list_routes.js';
+import communityRoute from './routes/community_routes.js';
 import { baseApi } from './middlewares/base_handle.js';
 
 const app = express();
@@ -23,8 +24,9 @@ app.use(cookieParser());
 app.use(cors({
   origin: NODE_ENV === 'production'
     ? process.env.ALLOWED_ORIGIN
-    : '*',
+    : 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true, // required for cookie-based auth to work cross-origin
 }));
 app.use(morgan(
   NODE_ENV === 'production' ? 'combined' : 'dev'
@@ -42,6 +44,7 @@ app.use(`${API}/books`, bookRoute);
 app.use(`${API}/borrows`, borrowRoute);
 app.use(`${API}/categories`, categoryRoute);
 app.use(`${API}/saved-lists`, savedListRoute);
+app.use(`${API}/community`, communityRoute);
 
 // 404 handler
 app.use(undefinedRoute);
