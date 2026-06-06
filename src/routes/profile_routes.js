@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middlewares/authenticate.js';
-import { formValidate } from '../validators/auth_validate.js';
+import { formValidate } from '../validators/form_validate.js';
 import { completeProfileSchema, getProfileByIdSchema } from '../models/schema/profile_schema.js';
 import { completeProfile, getProfileById, getProfileLogin, uploadPhotoProfile } from '../controllers/profile_controller.js';
 import { uploadPhoto } from '../middlewares/upload_middleware.js';

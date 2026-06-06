@@ -13,6 +13,7 @@ import bookRoute from './routes/book_routes.js';
 
 import borrowRoute from './routes/borrow_routes.js';
 import categoryRoute from './routes/category_routes.js';
+import savedListRoute from './routes/saved_list_routes.js';
 import { baseApi } from './middlewares/base_handle.js';
 
 const app = express();
@@ -40,6 +41,7 @@ app.use(`${API}/profile`, profileRoute);
 app.use(`${API}/books`, bookRoute);
 app.use(`${API}/borrows`, borrowRoute);
 app.use(`${API}/categories`, categoryRoute);
+app.use(`${API}/saved-lists`, savedListRoute);
 
 // 404 handler
 app.use(undefinedRoute);

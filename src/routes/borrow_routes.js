@@ -1,25 +1,50 @@
 import { Router } from 'express';
+import { authenticate } from '../middlewares/authenticate.js';
+import { requireAdmin } from '../middlewares/require_admin.js';
+import { formValidate } from '../validators/form_validate.js';
+import {
+  createBorrowSchema,
+  getBorrowByIdSchema,
+  updateBorrowStatusSchema,
+} from '../models/schema/borrow_schema.js';
+import {
+  createBorrow,
+  getMyBorrows,
+  getBorrowById,
+  getAllBorrows,
+  updateBorrowStatus,
+} from '../controllers/borrow_controller.js';
 
 const router = Router();
 
-// GET all borrows
-router.get('/', (req, res) => {
-  res.status(501).json({ success: false, message: 'Get borrows endpoint - coming soon' });
-});
+// ==========================================
+// POST /borrows
+// Create borrow request
+// ==========================================
+router.post('/', authenticate, formValidate(createBorrowSchema), createBorrow);
 
-// GET single borrow record
-router.get('/:id', (req, res) => {
-  res.status(501).json({ success: false, message: 'Get borrow endpoint - coming soon' });
-});
+// ==========================================
+// GET /borrows/me
+// Get logged-in user's borrows
+// ==========================================
+router.get('/me', authenticate, getMyBorrows);
 
-// POST borrow a book
-router.post('/', (req, res) => {
-  res.status(501).json({ success: false, message: 'Borrow book endpoint - coming soon' });
-});
+// ==========================================
+// GET /borrows/:id
+// Get single borrow detail (QR scan)
+// ==========================================
+router.get('/:id', authenticate, formValidate(getBorrowByIdSchema), getBorrowById);
 
-// PUT return a book
-router.put('/:id/return', (req, res) => {
-  res.status(501).json({ success: false, message: 'Return book endpoint - coming soon' });
-});
+// ==========================================
+// GET /borrows
+// Get all borrow requests (admin)
+// ==========================================
+router.get('/', authenticate, requireAdmin, getAllBorrows);
+
+// ==========================================
+// PUT /borrows/:id/status
+// Update borrow status (admin)
+// ==========================================
+router.put('/:id/status', authenticate, requireAdmin, formValidate(updateBorrowStatusSchema), updateBorrowStatus);
 
 export default router;

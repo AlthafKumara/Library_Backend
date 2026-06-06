@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { formValidate } from "../validators/auth_validate.js";
+import { formValidate } from "../validators/form_validate.js";
 import {loginSchema, registerSchema} from "../models/schema/auth_schema.js";
 import { login, logout, refreshToken, register,} from '../controllers/auth_controller.js';
 
