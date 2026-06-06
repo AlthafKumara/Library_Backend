@@ -1,7 +1,7 @@
 import { supabase } from '../config/db.js';
 import { formatBorrowResponse } from '../models/dto/borrow_dto.js';
 import { generateQrText } from '../utils/qr_helper.js';
-import { BORROW, BOOK } from '../constants/db_constant.js';
+import { BORROW, BOOK, PROFILE } from '../constants/db_constant.js';
 
 // ==========================================
 // 1. CREATE BORROW CONTROLLER
@@ -129,6 +129,7 @@ export const getMyBorrows = async (req, res) => {
 export const getBorrowById = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
     const { data, error } = await supabase
       .from(BORROW)
@@ -144,6 +145,22 @@ export const getBorrowById = async (req, res) => {
         });
       }
       throw error;
+    }
+
+    // Ownership / admin check — prevent IDOR
+    if (data.user_id !== userId) {
+      const { data: profile } = await supabase
+        .from(PROFILE)
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      if (profile?.role !== 'admin') {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Akses ditolak. Anda tidak memiliki izin untuk melihat peminjaman ini.',
+        });
+      }
     }
 
     return res.status(200).json({
@@ -214,8 +231,6 @@ export const updateBorrowStatus = async (req, res) => {
       throw findError;
     }
 
-    const previousStatus = existingBorrow.status;
-
     // Build update payload
     const updatePayload = {
       status,
@@ -227,8 +242,6 @@ export const updateBorrowStatus = async (req, res) => {
     } else if (status === 'returned') {
       updatePayload.actual_return_date = new Date().toISOString();
     }
-    
-    updatePayload.qr_text = generateQrText(existingBorrow.user_id, id, existingBorrow.book_id);
 
     // Update borrow row
     const { data: updatedBorrow, error: updateError } = await supabase

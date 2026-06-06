@@ -24,6 +24,23 @@ export const createSavedList = async (req, res) => {
       });
     }
 
+    // Duplicate guard: check if book is already in user's saved list
+    const { data: existingSaved, error: existingError } = await supabase
+      .from(SAVED_LIST_BOOKS)
+      .select('id')
+      .eq('user_id', userId)
+      .eq('book_id', book_id)
+      .maybeSingle();
+
+    if (existingError) throw existingError;
+
+    if (existingSaved) {
+      return res.status(409).json({
+        status: 'error',
+        message: 'Buku ini sudah ada di saved list Anda.',
+      });
+    }
+
     // Insert new saved list row
     const { data: newSavedList, error: insertError } = await supabase
       .from(SAVED_LIST_BOOKS)
