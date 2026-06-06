@@ -10,7 +10,7 @@ export const formatBorrowResponse = (borrow) => ({
   borrowDate: borrow.borrow_date,
   actualReturnDate: borrow.actual_return_date,
   status: borrow.status,
-  isReview: borrow.is_review,
+  isReviewed: borrow.is_reviewed,
   qrText: borrow.qr_text,
   createdAt: borrow.created_at,
   updatedAt: borrow.updated_at,

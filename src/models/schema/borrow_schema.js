@@ -6,9 +6,19 @@ import { z } from 'zod';
 export const createBorrowSchema = z.object({
   body: z.object({
     book_id: z.coerce.number().int({ message: 'ID Buku harus berupa bilangan bulat' }),
-    due_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
-      message: 'Format tanggal due_date tidak valid',
-    }),
+    due_date: z.string()
+  .refine((date) => !isNaN(Date.parse(date)), {
+    message: 'Format tanggal due_date tidak valid',
+  })
+  .refine((date) => {
+    const inputDate = new Date(date);
+    const today = new Date();
+    inputDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    return inputDate > today; 
+  }, {
+    message: 'due_date tidak boleh hari ini atau hari yang sudah terlewat',
+  }),
   }),
 });
 

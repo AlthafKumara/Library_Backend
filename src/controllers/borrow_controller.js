@@ -227,11 +227,7 @@ export const updateBorrowStatus = async (req, res) => {
     } else if (status === 'returned') {
       updatePayload.actual_return_date = new Date().toISOString();
     }
-
-    // Always regenerate QR text to reflect potential state logic, though the ID strings remain the same, 
-    // it was specified in the requirements to "Regenerate qr_text with updated status payload" 
-    // Wait, the plan says qr_text is just "userId|borrowId|bookId" which doesn't change. 
-    // I will regenerate it anyway to be safe, or just keep it same.
+    
     updatePayload.qr_text = generateQrText(existingBorrow.user_id, id, existingBorrow.book_id);
 
     // Update borrow row
@@ -243,21 +239,6 @@ export const updateBorrowStatus = async (req, res) => {
       .single();
 
     if (updateError) throw updateError;
-
-    // Handle stock changes
-    if (status === 'approved' && previousStatus === 'pending') {
-      // Decrement stock by 1
-      const { data: bookData } = await supabase.from(BOOK).select('stock').eq('id', existingBorrow.book_id).single();
-      if (bookData) {
-        await supabase.from(BOOK).update({ stock: Math.max(0, bookData.stock - 1) }).eq('id', existingBorrow.book_id);
-      }
-    } else if (status === 'returned' && previousStatus !== 'returned') {
-      // Increment stock by 1
-      const { data: bookData } = await supabase.from(BOOK).select('stock').eq('id', existingBorrow.book_id).single();
-      if (bookData) {
-        await supabase.from(BOOK).update({ stock: bookData.stock + 1 }).eq('id', existingBorrow.book_id);
-      }
-    }
 
     return res.status(200).json({
       status: 'success',
