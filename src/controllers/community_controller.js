@@ -10,11 +10,11 @@ export const createMessage = async (req, res) => {
     const { message_text, parent_id, book_id } = req.body;
     const userId = req.user.id;
 
-    // Optional: Validate parent_id references a real message
+    // Validate parent_id references a real top-level message (no reply-to-reply)
     if (parent_id) {
       const { data: parentData, error: parentError } = await supabase
         .from(COMMUNITY)
-        .select('id')
+        .select('id, parent_id')
         .eq('id', parent_id)
         .single();
 
@@ -22,6 +22,14 @@ export const createMessage = async (req, res) => {
         return res.status(404).json({
           status: 'error',
           message: 'Pesan induk tidak ditemukan.',
+        });
+      }
+
+      // Prevent nested replies (reply-to-reply not allowed)
+      if (parentData.parent_id !== null) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Tidak dapat membalas sebuah balasan.',
         });
       }
     }
@@ -46,7 +54,7 @@ export const createMessage = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[createMessage Error]:', error.message);
+    console.error('[createMessage Error]:', error);
     return res.status(500).json({
       status: 'error',
       message: 'Terjadi kesalahan pada server.',
@@ -59,8 +67,9 @@ export const createMessage = async (req, res) => {
 // ==========================================
 export const getAllMessages = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 10;
-    const cursor = req.query.cursor ? parseInt(req.query.cursor) : Number.MAX_SAFE_INTEGER;
+    // Zod already coerces these to numbers; use nullish coalescing, no parseInt needed
+    const limit = req.query.limit ?? 10;
+    const cursor = req.query.cursor ?? Number.MAX_SAFE_INTEGER;
 
     const { data, error } = await supabase
       .from(COMMUNITY)
@@ -72,7 +81,8 @@ export const getAllMessages = async (req, res) => {
 
     if (error) throw error;
 
-    const nextCursor = data.length > 0 ? data[data.length - 1].id : null;
+    // Return null cursor when we are on the last page (data.length < limit)
+    const nextCursor = data.length === limit ? data[data.length - 1].id : null;
 
     return res.status(200).json({
       status: 'success',
@@ -81,7 +91,7 @@ export const getAllMessages = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[getAllMessages Error]:', error.message);
+    console.error('[getAllMessages Error]:', error);
     return res.status(500).json({
       status: 'error',
       message: 'Terjadi kesalahan pada server.',
@@ -95,8 +105,9 @@ export const getAllMessages = async (req, res) => {
 export const getMessageById = async (req, res) => {
   try {
     const { id } = req.params;
-    const limit = parseInt(req.query.limit) || 10;
-    const cursor = req.query.cursor ? parseInt(req.query.cursor) : Number.MAX_SAFE_INTEGER;
+    // Zod already coerces these to numbers; use nullish coalescing, no parseInt needed
+    const limit = req.query.limit ?? 10;
+    const cursor = req.query.cursor ?? Number.MAX_SAFE_INTEGER;
 
     // Step 1: Fetch parent message
     const { data: parentData, error: parentError } = await supabase
@@ -126,7 +137,8 @@ export const getMessageById = async (req, res) => {
 
     if (repliesError) throw repliesError;
 
-    const nextCursor = repliesData.length > 0 ? repliesData[repliesData.length - 1].id : null;
+    // Return null cursor when we are on the last page
+    const nextCursor = repliesData.length === limit ? repliesData[repliesData.length - 1].id : null;
 
     return res.status(200).json({
       status: 'success',
@@ -139,7 +151,7 @@ export const getMessageById = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[getMessageById Error]:', error.message);
+    console.error('[getMessageById Error]:', error);
     return res.status(500).json({
       status: 'error',
       message: 'Terjadi kesalahan pada server.',
@@ -156,27 +168,39 @@ export const updateMessage = async (req, res) => {
     const { message_text } = req.body;
     const userId = req.user.id;
 
+    // Step 1: Check existence first so we can return proper 404 vs 403
+    const { data: existing, error: findError } = await supabase
+      .from(COMMUNITY)
+      .select('user_id')
+      .eq('id', id)
+      .single();
+
+    if (findError) {
+      if (findError.code === 'PGRST116') {
+        return res.status(404).json({
+          status: 'error',
+          message: 'Pesan tidak ditemukan.',
+        });
+      }
+      throw findError;
+    }
+
+    if (existing.user_id !== userId) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Akses ditolak. Anda tidak memiliki izin.',
+      });
+    }
+
+    // Step 2: Perform update (updated_at managed by DB trigger; removed from app layer)
     const { data, error } = await supabase
       .from(COMMUNITY)
-      .update({
-        message_text,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ message_text })
       .eq('id', id)
-      .eq('user_id', userId)      // ownership check sekaligus
       .select('*, profiles(id, name)')
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // Bisa: tidak ditemukan ATAU bukan miliknya
-        return res.status(404).json({
-          status: 'error',
-          message: 'Pesan tidak ditemukan atau akses ditolak.',
-        });
-      }
-      throw error;
-    }
+    if (error) throw error;
 
     return res.status(200).json({
       status: 'success',
@@ -185,7 +209,7 @@ export const updateMessage = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[updateMessage Error]:', error.message);
+    console.error('[updateMessage Error]:', error);
     return res.status(500).json({
       status: 'error',
       message: 'Terjadi kesalahan pada server.',
@@ -201,23 +225,37 @@ export const deleteMessage = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
-    const { data, error } = await supabase
+    // Step 1: Check existence first so we can return proper 404 vs 403
+    const { data: existing, error: findError } = await supabase
       .from(COMMUNITY)
-      .delete()
+      .select('user_id')
       .eq('id', id)
-      .eq('user_id', userId)      // ownership check sekaligus
-      .select('id')               // untuk deteksi apakah ada row yang terhapus
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
+    if (findError) {
+      if (findError.code === 'PGRST116') {
         return res.status(404).json({
           status: 'error',
-          message: 'Pesan tidak ditemukan atau akses ditolak.',
+          message: 'Pesan tidak ditemukan.',
         });
       }
-      throw error;
+      throw findError;
     }
+
+    if (existing.user_id !== userId) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Akses ditolak. Anda tidak memiliki izin.',
+      });
+    }
+
+    // Step 2: Perform delete
+    const { error } = await supabase
+      .from(COMMUNITY)
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
 
     return res.status(200).json({
       status: 'success',
@@ -225,7 +263,7 @@ export const deleteMessage = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[deleteMessage Error]:', error.message);
+    console.error('[deleteMessage Error]:', error);
     return res.status(500).json({
       status: 'error',
       message: 'Terjadi kesalahan pada server.',
