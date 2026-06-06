@@ -49,7 +49,7 @@ export const createMessage = async (req, res) => {
     console.error('[createMessage Error]:', error.message);
     return res.status(500).json({
       status: 'error',
-      message: error.message || 'Terjadi kesalahan pada server.',
+      message: 'Terjadi kesalahan pada server.',
     });
   }
 };
@@ -84,7 +84,7 @@ export const getAllMessages = async (req, res) => {
     console.error('[getAllMessages Error]:', error.message);
     return res.status(500).json({
       status: 'error',
-      message: error.message || 'Terjadi kesalahan pada server.',
+      message: 'Terjadi kesalahan pada server.',
     });
   }
 };
@@ -142,7 +142,7 @@ export const getMessageById = async (req, res) => {
     console.error('[getMessageById Error]:', error.message);
     return res.status(500).json({
       status: 'error',
-      message: error.message || 'Terjadi kesalahan pada server.',
+      message: 'Terjadi kesalahan pada server.',
     });
   }
 };
@@ -156,41 +156,27 @@ export const updateMessage = async (req, res) => {
     const { message_text } = req.body;
     const userId = req.user.id;
 
-    // Fetch existing
-    const { data: existing, error: findError } = await supabase
-      .from(COMMUNITY)
-      .select('user_id')
-      .eq('id', id)
-      .single();
-
-    if (findError) {
-      if (findError.code === 'PGRST116') {
-        return res.status(404).json({
-          status: 'error',
-          message: 'Pesan tidak ditemukan.',
-        });
-      }
-      throw findError;
-    }
-
-    if (existing.user_id !== userId) {
-      return res.status(403).json({
-        status: 'error',
-        message: 'Akses ditolak. Anda tidak memiliki izin.',
-      });
-    }
-
     const { data, error } = await supabase
       .from(COMMUNITY)
       .update({
         message_text,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', id)
+      .eq('user_id', userId)      // ownership check sekaligus
       .select('*, profiles(id, name)')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // Bisa: tidak ditemukan ATAU bukan miliknya
+        return res.status(404).json({
+          status: 'error',
+          message: 'Pesan tidak ditemukan atau akses ditolak.',
+        });
+      }
+      throw error;
+    }
 
     return res.status(200).json({
       status: 'success',
@@ -202,7 +188,7 @@ export const updateMessage = async (req, res) => {
     console.error('[updateMessage Error]:', error.message);
     return res.status(500).json({
       status: 'error',
-      message: error.message || 'Terjadi kesalahan pada server.',
+      message: 'Terjadi kesalahan pada server.',
     });
   }
 };
@@ -215,36 +201,23 @@ export const deleteMessage = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
-    // Fetch existing
-    const { data: existing, error: findError } = await supabase
-      .from(COMMUNITY)
-      .select('user_id')
-      .eq('id', id)
-      .single();
-
-    if (findError) {
-      if (findError.code === 'PGRST116') {
-        return res.status(404).json({
-          status: 'error',
-          message: 'Pesan tidak ditemukan.',
-        });
-      }
-      throw findError;
-    }
-
-    if (existing.user_id !== userId) {
-      return res.status(403).json({
-        status: 'error',
-        message: 'Akses ditolak. Anda tidak memiliki izin.',
-      });
-    }
-
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from(COMMUNITY)
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', userId)      // ownership check sekaligus
+      .select('id')               // untuk deteksi apakah ada row yang terhapus
+      .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({
+          status: 'error',
+          message: 'Pesan tidak ditemukan atau akses ditolak.',
+        });
+      }
+      throw error;
+    }
 
     return res.status(200).json({
       status: 'success',
@@ -255,7 +228,7 @@ export const deleteMessage = async (req, res) => {
     console.error('[deleteMessage Error]:', error.message);
     return res.status(500).json({
       status: 'error',
-      message: error.message || 'Terjadi kesalahan pada server.',
+      message: 'Terjadi kesalahan pada server.',
     });
   }
 };

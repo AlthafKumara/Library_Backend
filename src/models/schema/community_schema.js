@@ -5,7 +5,7 @@ import { z } from 'zod';
 // ==========================================
 export const createCommunitySchema = z.object({
   body: z.object({
-    message_text: z.string().min(1, { message: 'Teks pesan wajib diisi' }),
+    message_text: z.string().min(1, { message: 'Teks pesan wajib diisi' }).max(250, {message : "Text Tidak boleh lebih dari 250 karakter"}),
     parent_id: z.coerce.number().int().optional().nullable(),
     book_id: z.coerce.number().int().optional().nullable(),
   }),
@@ -42,7 +42,7 @@ export const updateCommunitySchema = z.object({
     id: z.coerce.number().int('ID Harus Bilangan Bulat'),
   }),
   body: z.object({
-    message_text: z.string().min(1, { message: 'Teks pesan wajib diisi' }),
+    message_text: z.string().min(1, { message: 'Teks pesan wajib diisi' }).max(250, {message : "Text Tidak boleh lebih dari 250 karakter"}),
   }),
 });
 
