@@ -24,7 +24,7 @@ app.use(cookieParser());
 app.use(cors({
   origin: NODE_ENV === 'production'
     ? process.env.ALLOWED_ORIGIN
-    : 'http://localhost:3000',
+    : 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true, // required for cookie-based auth to work cross-origin
 }));
