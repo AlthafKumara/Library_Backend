@@ -1,7 +1,7 @@
 /**
  * Global error handler middleware
  */
-const errorHandler = (err, req, res, next) => {
+export const errorHandler = (err, req, res, next) => {
   const status = err.status || err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
 
@@ -17,4 +17,11 @@ const errorHandler = (err, req, res, next) => {
   });
 };
 
-export default errorHandler;
+export const undefinedRoute = (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Route tidak ditemukan',
+    path: req.originalUrl,
+  });
+}
+

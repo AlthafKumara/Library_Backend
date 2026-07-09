@@ -16,6 +16,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",
     "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -24,6 +25,7 @@
     "jest": "^30.4.2",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
+    "multer": "^2.1.1",
     "nodemon": "^3.1.14",
     "pg": "^8.21.0",
     "supertest": "^7.2.2",
