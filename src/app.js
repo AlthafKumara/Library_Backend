@@ -36,7 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const API = '/api/v1';
 // BASE RETURN API
-app.get(baseApi(NODE_ENV))
+app.get("/",baseApi(NODE_ENV))
 app.get(API, baseApi(NODE_ENV))
 
 app.use(`${API}/auth`, authRoute);
