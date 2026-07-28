@@ -125,14 +125,22 @@ export const getProfileLogin = async (req, res) => {
       .single();
 
     if (error) {
-      // Kode PGRST116 = baris tidak ditemukan di PostgREST
+      // Case Call Berhasil tetapi Baris tidak ada di database (User sudah daftar namun belum mengisi Profile)
+      // Kode PGRST116 = baris tidak ditemukan di PostgREST Case
       if (error.code === 'PGRST116') {
-        return res.status(404).json({
-          status: 'error',
+        return res.status(200).json({
+          status: 'success',
+          message: 'User berhasil register tanpa data profile',
+          data : null
+        });
+      } else {
+        
+          return res.status(404).json({  
+          status: 'success',
           message: 'Profil pengguna yang sedang login tidak ditemukan.',
         });
       }
-      throw error;
+      
     }
 
     return res.status(200).json({
