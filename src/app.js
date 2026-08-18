@@ -21,10 +21,20 @@ const app = express();
 
 app.use(helmet());
 app.use(cookieParser());
+const allowedOrigins = [
+  ...(process.env.ALLOWED_ORIGIN
+    ? process.env.ALLOWED_ORIGIN.split(',').map((o) => o.trim())
+    : []),
+  'http://localhost:5173',
+];
+
 app.use(cors({
-  origin: NODE_ENV === 'production'
-    ? process.env.ALLOWED_ORIGIN
-    : 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS: origin '${origin}' is not allowed`));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true, // required for cookie-based auth to work cross-origin
 }));
